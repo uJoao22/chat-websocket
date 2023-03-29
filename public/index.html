@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Chat da Rocketseat</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <form id="chat">
+    <input type="text" name="username" placeholder="Digite seu usuário">
+
+    <div class="messages"></div>
+
+    <input type="text" name="message" placeholder="Digite seu mensagem">
+
+    <button type="submit">Enviar</button>
+  </form>
+
+  <script type="text/javascript">
+    // Abrindo conexão com back-end (serve.js) via socket.io
+    var socket = io('http://localhost:3000');
+
+    console.log(socket);
+
+    // Função para inserir a mensagem na div
+    function renderMessage(message) {
+      // Insere a mensagem no inicio da div, com o nome do author e o conteudo da mensagem
+      $('.messages').append('<div class="message"><strong>'+ message.author +'</strong>:'+ message.message +'</div>');
+    }
+
+    // Criando ouvinte para receber todo o histórico de mensagem quando um novo socket for conectado
+    socket.on('previousMessages', messages => {
+      for (message of messages) {
+        renderMessage(message);
+      }
+    });
+
+    // Criando ouvinte para receber a mensagem enviada em todos os socketes conectados
+    socket.on('receivedMessage', message => {
+      renderMessage(message);
+    });
+
+    // Evento para quando o formulário for submetido
+    $('#chat').submit((event) => {
+      // Prevenindo comportamento padrão do formulário
+      event.preventDefault();
+
+      // Pegando o nome do author
+      var author = $('input[name=username').val();
+      // Pegando a messagem digitado no input message
+      var message = $('input[name=message').val();
+
+      // Verificando se foi preenchido tanto o autor como a mensagem
+      if (author.length && message.length) {
+        // Criando objeto com o nome do autor e a mensagem digitada
+        var messageObject = {
+          author,
+          message
+        };
+
+        // Chamando renderMessage para renderizar a mensagem
+        renderMessage(messageObject);
+
+        // Enviando para back-end o objeto utilizando socket.io
+        // emit faz a requisição, chamando a função definida no primerio parametro e enviando a variavel do segundo parametro como parametro
+        socket.emit('sendMessage', messageObject);
+      }
+    });
+  </script>
+</body>
+</html>
